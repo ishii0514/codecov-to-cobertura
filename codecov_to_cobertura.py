@@ -29,7 +29,8 @@ def main(from_file, to_file, object_path, source_path, out_source_path):
         classes.append(class_elem)
     add_missing_files(classes, source_path)
     for class_elem in classes.findall("class"):
-        add_missing_methods(class_elem, object_path)
+        # skip
+        # add_missing_methods(class_elem, object_path)
         create_lines(class_elem)
         replace_source_path(class_elem, source_path, out_source_path)
     total_branch_rate = str(calc_total_branch_rate(root.iter("BLOCKS")))
@@ -91,7 +92,10 @@ def is_source_file(filepath):
 def module_in_source(module, source_path):
     """Return True if given MODULE element contains the given path."""
     module_path = module.get("name", "unknown")
-    return source_path in module_path
+    # for windows
+    module_path_u = module_path.upper()
+    soure_path_u = source_path.upper()
+    return soure_path_u in module_path_u
 
 
 def create_lines(class_elem):
@@ -114,7 +118,7 @@ def add_missing_methods(class_elem, object_path):
     """Add missing methods to given class node, using given object path."""
     source_path = class_elem.get("filename")
     filename = os.path.basename(source_path)
-    objectname = os.path.splitext(filename)[0] + ".o"
+    objectname = os.path.splitext(filename)[0] + ".obj"
     object_file_path = find_in_dir(objectname, object_path)
     file_methods = methods_in_file(object_file_path)
     logging.debug("Methods in %s: %s", objectname, file_methods)
@@ -271,7 +275,9 @@ def function_to_method(function):
     full_name = function.get("name", "unknown")
     function_name = full_name.split("_mp_")[-1].strip("_")
     blocks = function.find("BLOCKS")
-    branch_rate = str(float(blocks.get("covered"))/float(blocks.get("total")))
+    branch_rate = "0.0"
+    if blocks.get("total") != '0':
+        branch_rate = str(float(blocks.get("covered"))/float(blocks.get("total")))
     method = Element("method", attrib={"name": function_name,
                                        "branch-rate": branch_rate,
                                        "line-rate": branch_rate,
